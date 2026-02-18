@@ -1,0 +1,40 @@
+version: "3.8"
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    container_name: controle-v2-backend
+    environment:
+      - NODE_ENV=production
+      - PORT=3333
+      - JWT_SECRET=${JWT_SECRET:-change-me-in-production-min-32-chars-long}
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:8080}
+    ports:
+      - "3333:3333"
+    networks:
+      - controle-v2-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3333/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+    container_name: controle-v2-frontend
+    ports:
+      - "8080:80"
+    networks:
+      - controle-v2-network
+    restart: unless-stopped
+    depends_on:
+      - backend
+
+networks:
+  controle-v2-network:
+    driver: bridge

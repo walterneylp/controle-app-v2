@@ -1,0 +1,20 @@
+{
+  "name": "controle-app-v2",
+  "private": true,
+  "version": "2.0.0",
+  "workspaces": [
+    "apps/backend",
+    "apps/frontend"
+  ],
+  "scripts": {
+    "prebuild": "node scripts/bump-build.mjs",
+    "dev:backend": "npm run dev -w apps/backend",
+    "dev:frontend": "npm run dev -w apps/frontend",
+    "build": "npm run build -w apps/backend && npm run build -w apps/frontend",
+    "lint": "npm run lint -w apps/backend && npm run lint -w apps/frontend",
+    "deploy": "npm run build && node scripts/deploy.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.8.7"
+  }
+}

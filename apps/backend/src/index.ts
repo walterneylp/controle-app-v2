@@ -1,0 +1,26 @@
+import "express-async-errors";
+import cors from "cors";
+import helmet from "helmet";
+import express from "express";
+import { env } from "./config/env.js";
+import { errorHandler } from "./core/errors.js";
+import { authRouter } from "./modules/auth/routes.js";
+import { healthRouter } from "./modules/health/routes.js";
+
+const app = express();
+
+// Security middleware
+app.use(helmet());
+app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
+app.use(express.json({ limit: "10mb" }));
+
+// Routes
+app.use("/api/health", healthRouter);
+app.use("/api/auth", authRouter);
+
+// Error handler
+app.use(errorHandler);
+
+app.listen(env.PORT, () => {
+  console.log(`🚀 ${env.APP_NAME} rodando em http://localhost:${env.PORT}`);
+});
