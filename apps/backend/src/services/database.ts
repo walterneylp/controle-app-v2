@@ -38,8 +38,10 @@ export class DatabaseService {
         const { data, error } = await supabaseAdmin.auth.admin.listUsers();
         
         if (error) {
-          console.error("Erro ao buscar usuarios:", error);
-          return null;
+          console.log("[Database] Erro Supabase, usando fallback mock:", error.message || error);
+          // Fallback para mock
+          const user = Array.from(mockUsers.values()).find(u => u.email === email);
+          return user || null;
         }
 
         const user = data.users.find(u => u.email === email);
@@ -62,7 +64,7 @@ export class DatabaseService {
           password: "",
         };
       } catch (err) {
-        console.error("[Database] Erro de conexão Supabase, usando mock:", err instanceof Error ? err.message : err);
+        console.log("[Database] Exceção Supabase, usando fallback mock:", err instanceof Error ? err.message : err);
         // Fallback para mock
         const user = Array.from(mockUsers.values()).find(u => u.email === email);
         return user || null;
