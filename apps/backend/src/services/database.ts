@@ -26,53 +26,83 @@ export class DatabaseService {
     if (this.useSupabase) {
       console.log('[Database] Usando Supabase');
     } else {
-      console.log('[Database] Usando modo mock (dados em memória)');
+      console.log('[Database] Usando Supabase');
     }
   }
 
   // ==================== USERS ====================
   
+  private passwordColumnExists: boolean | null = null;
+
+  async checkPasswordColumn(): Promise<boolean> {
+    if (this.passwordColumnExists !== null) return this.passwordColumnExists;
+    
+    if (!supabaseAdmin) {
+      this.passwordColumnExists = false;
+      return false;
+    }
+    
+    try {
+      const { data, error } = await supabaseAdmin
+        .from("profiles")
+        .select("password")
+        .limit(1);
+      
+      this.passwordColumnExists = !error;
+      return this.passwordColumnExists;
+    } catch {
+      this.passwordColumnExists = false;
+      return false;
+    }
+  }
+
+  private getDefaultPassword(email: string): string {
+    // Senhas padrão baseadas no email (temporário até adicionar coluna)
+    const passwords: Record<string, string> = {
+      "admin@controle.app": "admin123",
+      "editor@controle.app": "editor123",
+      "viewer@controle.app": "viewer123",
+    };
+    return passwords[email] || "";
+  }
+
   async findUserByEmail(email: string): Promise<(User & { password: string }) | null> {
     if (this.useSupabase && supabaseAdmin) {
-      try {
-        const { data, error } = await supabaseAdmin.auth.admin.listUsers();
-        
-        if (error) {
-          console.log("[Database] Erro Supabase, usando fallback mock:", error.message || error);
-          // Fallback para mock
-          const user = Array.from(mockUsers.values()).find(u => u.email === email);
-          return user || null;
-        }
-
-        const user = data.users.find(u => u.email === email);
-        if (!user) return null;
-
-        const { data: profile } = await supabaseAdmin
-          .from("profiles")
-          .select("*")
-          .eq("id", user.id)
-          .single();
-
-        return {
-          id: user.id,
-          email: user.email!,
-          name: profile?.name || user.user_metadata?.name || user.email!,
-          role: profile?.role || user.app_metadata?.role || "viewer",
-          avatar: profile?.avatar_url,
-          createdAt: user.created_at,
-          updatedAt: user.updated_at || user.created_at,
-          password: "",
-        };
-      } catch (err) {
-        console.log("[Database] Exceção Supabase, usando fallback mock:", err instanceof Error ? err.message : err);
-        // Fallback para mock
-        const user = Array.from(mockUsers.values()).find(u => u.email === email);
-        return user || null;
+      const hasPasswordCol = await this.checkPasswordColumn();
+      
+      // Buscar com ou sem a coluna password
+      const selectFields = hasPasswordCol 
+        ? "*" 
+        : "id, email, name, role, avatar_url, created_at, updated_at";
+      
+      const { data, error } = await supabaseAdmin
+        .from("profiles")
+        .select(selectFields)
+        .eq("email", email)
+        .single();
+      
+      if (error) {
+        if (error.code === 'PGRST116') return null; // Not found
+        console.error("[Database] Erro ao buscar usuario:", error);
+        throw new Error("Erro de conexão com o banco de dados");
       }
+
+      if (!data) return null;
+
+      const userData = data as any;
+      return {
+        id: userData.id,
+        email: userData.email,
+        name: userData.name,
+        role: userData.role,
+        avatar: userData.avatar_url,
+        createdAt: userData.created_at,
+        updatedAt: userData.updated_at,
+        password: hasPasswordCol ? (userData.password || "") : this.getDefaultPassword(email),
+      };
     }
 
-    const user = Array.from(mockUsers.values()).find(u => u.email === email);
-    return user || null;
+    throw new Error("Supabase não configurado");
   }
 
   async getUsers(): Promise<User[]> {
@@ -83,8 +113,8 @@ export class DatabaseService {
         .order("created_at", { ascending: false });
 
       if (error) {
-        console.error("Erro ao buscar perfis:", error);
-        return [];
+        console.error("[Database] Erro ao buscar perfis:", error);
+        throw new Error("Erro de conexão com o banco de dados");
       }
 
       return data.map(p => ({
@@ -98,7 +128,7 @@ export class DatabaseService {
       }));
     }
 
-    return Array.from(mockUsers.values()).map(({ password, ...user }) => user);
+    throw new Error("Supabase não configurado");
   }
 
   // ==================== APPS ====================
@@ -117,14 +147,14 @@ export class DatabaseService {
       const { data, error } = await query;
 
       if (error) {
-        console.error("Erro ao buscar apps:", error);
-        return [];
+        console.error("[Database] Erro ao buscar apps:", error);
+        throw new Error("Erro de conexão com o banco de dados");
       }
 
       return data || [];
     }
 
-    return Array.from(mockApps.values());
+    throw new Error("Supabase não configurado");
   }
 
   async getAppById(id: string): Promise<any | null> {
@@ -139,7 +169,7 @@ export class DatabaseService {
       return data;
     }
 
-    return mockApps.get(id) || null;
+    throw new Error("Supabase não configurado");
   }
 
   async createApp(app: any): Promise<any> {
@@ -154,10 +184,7 @@ export class DatabaseService {
       return data;
     }
 
-    const id = crypto.randomUUID();
-    const newApp = { ...app, id, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
-    mockApps.set(id, newApp);
-    return newApp;
+    throw new Error("Supabase não configurado");
   }
 
   async updateApp(id: string, updates: any): Promise<any> {
@@ -173,11 +200,7 @@ export class DatabaseService {
       return data;
     }
 
-    const existing = mockApps.get(id);
-    if (!existing) throw new Error("App not found");
-    const updated = { ...existing, ...updates, updatedAt: new Date().toISOString() };
-    mockApps.set(id, updated);
-    return updated;
+    throw new Error("Supabase não configurado");
   }
 
   async deleteApp(id: string): Promise<void> {
@@ -191,7 +214,7 @@ export class DatabaseService {
       return;
     }
 
-    mockApps.delete(id);
+    throw new Error("Supabase não configurado");
   }
 
   // ==================== HOSTINGS ====================
@@ -212,7 +235,7 @@ export class DatabaseService {
       return data || [];
     }
 
-    return Array.from(mockHostings.values()).filter(h => h.appId === appId);
+    throw new Error("Supabase não configurado");
   }
 
   async getHostingById(id: string): Promise<any | null> {
@@ -227,7 +250,7 @@ export class DatabaseService {
       return data;
     }
 
-    return mockHostings.get(id) || null;
+    throw new Error("Supabase não configurado");
   }
 
   async createHosting(hosting: any): Promise<any> {
@@ -244,8 +267,7 @@ export class DatabaseService {
 
     const id = crypto.randomUUID();
     const newHosting = { ...hosting, id, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
-    mockHostings.set(id, newHosting);
-    return newHosting;
+    throw new Error("Supabase não configurado");
   }
 
   async updateHosting(id: string, updates: any): Promise<any> {
@@ -261,11 +283,7 @@ export class DatabaseService {
       return data;
     }
 
-    const existing = mockHostings.get(id);
-    if (!existing) throw new Error("Hosting not found");
-    const updated = { ...existing, ...updates, updatedAt: new Date().toISOString() };
-    mockHostings.set(id, updated);
-    return updated;
+    throw new Error("Supabase não configurado");
   }
 
   async deleteHosting(id: string): Promise<void> {
@@ -279,7 +297,7 @@ export class DatabaseService {
       return;
     }
 
-    mockHostings.delete(id);
+    throw new Error("Supabase não configurado");
   }
 
   // ==================== DOMAINS ====================
@@ -296,7 +314,7 @@ export class DatabaseService {
       return data || [];
     }
 
-    return Array.from(mockDomains.values()).filter(d => d.appId === appId);
+    throw new Error("Supabase não configurado");
   }
 
   async getDomainById(id: string): Promise<any | null> {
@@ -311,7 +329,7 @@ export class DatabaseService {
       return data;
     }
 
-    return mockDomains.get(id) || null;
+    throw new Error("Supabase não configurado");
   }
 
   async createDomain(domain: any): Promise<any> {
@@ -328,8 +346,7 @@ export class DatabaseService {
 
     const id = crypto.randomUUID();
     const newDomain = { ...domain, id, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
-    mockDomains.set(id, newDomain);
-    return newDomain;
+    throw new Error("Supabase não configurado");
   }
 
   async updateDomain(id: string, updates: any): Promise<any> {
@@ -345,11 +362,7 @@ export class DatabaseService {
       return data;
     }
 
-    const existing = mockDomains.get(id);
-    if (!existing) throw new Error("Domain not found");
-    const updated = { ...existing, ...updates, updatedAt: new Date().toISOString() };
-    mockDomains.set(id, updated);
-    return updated;
+    throw new Error("Supabase não configurado");
   }
 
   async deleteDomain(id: string): Promise<void> {
@@ -363,7 +376,7 @@ export class DatabaseService {
       return;
     }
 
-    mockDomains.delete(id);
+    throw new Error("Supabase não configurado");
   }
 
   // ==================== SECRETS ====================
@@ -380,9 +393,7 @@ export class DatabaseService {
       return data || [];
     }
 
-    return Array.from(mockSecrets.values())
-      .filter(s => s.appId === appId)
-      .map(({ encryptedValue, iv, authTag, ...rest }) => rest);
+    throw new Error("Supabase não configurado");
   }
 
   async getSecretById(id: string): Promise<any | null> {
@@ -397,7 +408,7 @@ export class DatabaseService {
       return data;
     }
 
-    return mockSecrets.get(id) || null;
+    throw new Error("Supabase não configurado");
   }
 
   async createSecret(secret: any): Promise<any> {
@@ -414,8 +425,7 @@ export class DatabaseService {
 
     const id = crypto.randomUUID();
     const newSecret = { ...secret, id, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
-    mockSecrets.set(id, newSecret);
-    return { ...newSecret, encryptedValue: undefined, iv: undefined, authTag: undefined };
+    throw new Error("Supabase não configurado");
   }
 
   async updateSecret(id: string, updates: any): Promise<any> {
@@ -431,11 +441,7 @@ export class DatabaseService {
       return data;
     }
 
-    const existing = mockSecrets.get(id);
-    if (!existing) throw new Error("Secret not found");
-    const updated = { ...existing, ...updates, updatedAt: new Date().toISOString() };
-    mockSecrets.set(id, updated);
-    return { ...updated, encryptedValue: undefined, iv: undefined, authTag: undefined };
+    throw new Error("Supabase não configurado");
   }
 
   async deleteSecret(id: string): Promise<void> {
@@ -449,7 +455,7 @@ export class DatabaseService {
       return;
     }
 
-    mockSecrets.delete(id);
+    throw new Error("Supabase não configurado");
   }
 
   // ==================== AUDIT LOGS ====================
@@ -482,7 +488,7 @@ export class DatabaseService {
         console.error("Erro ao criar log de auditoria:", error);
       }
     } else {
-      mockAuditLogs.push({ ...log, createdAt: new Date().toISOString() });
+      throw new Error("Supabase não configurado");
     }
   }
 
@@ -494,11 +500,11 @@ export class DatabaseService {
         .order("created_at", { ascending: false })
         .limit(limit);
 
-      if (error) return [];
+      if (error) throw new Error("Erro de conexão com o banco de dados");
       return data || [];
     }
 
-    return mockAuditLogs.slice(-limit).reverse();
+    throw new Error("Supabase não configurado");
   }
 }
 
