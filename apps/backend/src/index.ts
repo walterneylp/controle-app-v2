@@ -4,8 +4,10 @@ import helmet from "helmet";
 import express from "express";
 import { env } from "./config/env.js";
 import { errorHandler } from "./core/errors.js";
-import { authRouter } from "./modules/auth/routes.js";
 import { healthRouter } from "./modules/health/routes.js";
+import { authRouter } from "./modules/auth/routes.js";
+import { appsRouter } from "./modules/apps/routes.js";
+import { hostingsRouter } from "./modules/hostings/routes.js";
 
 const app = express();
 
@@ -17,6 +19,8 @@ app.use(express.json({ limit: "10mb" }));
 // Routes
 app.use("/api/health", healthRouter);
 app.use("/api/auth", authRouter);
+app.use("/api/apps", appsRouter);
+app.use("/api/hostings", hostingsRouter);
 
 // Error handler
 app.use(errorHandler);
