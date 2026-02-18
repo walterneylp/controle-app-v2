@@ -22,21 +22,10 @@ export class DatabaseService {
   private useSupabase: boolean;
 
   constructor() {
-    // Verificar se Supabase está configurado E acessível
-    const configured = isSupabaseConfigured();
-    if (configured) {
-      // Testar se consegue resolver o hostname
-      try {
-        const url = new URL(env.SUPABASE_URL || "");
-        // Se não conseguir conectar, vai falhar nas operações
-        // Por enquanto, desabilitamos Supabase se a URL contém domínio externo não acessível
-        this.useSupabase = false;
-        console.log('[Database] Usando modo mock (dados em memória)');
-      } catch {
-        this.useSupabase = false;
-      }
+    this.useSupabase = isSupabaseConfigured();
+    if (this.useSupabase) {
+      console.log('[Database] Usando Supabase');
     } else {
-      this.useSupabase = false;
       console.log('[Database] Usando modo mock (dados em memória)');
     }
   }
@@ -45,32 +34,39 @@ export class DatabaseService {
   
   async findUserByEmail(email: string): Promise<(User & { password: string }) | null> {
     if (this.useSupabase && supabaseAdmin) {
-      const { data, error } = await supabaseAdmin.auth.admin.listUsers();
-      
-      if (error) {
-        console.error("Erro ao buscar usuarios:", error);
-        return null;
+      try {
+        const { data, error } = await supabaseAdmin.auth.admin.listUsers();
+        
+        if (error) {
+          console.error("Erro ao buscar usuarios:", error);
+          return null;
+        }
+
+        const user = data.users.find(u => u.email === email);
+        if (!user) return null;
+
+        const { data: profile } = await supabaseAdmin
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .single();
+
+        return {
+          id: user.id,
+          email: user.email!,
+          name: profile?.name || user.user_metadata?.name || user.email!,
+          role: profile?.role || user.app_metadata?.role || "viewer",
+          avatar: profile?.avatar_url,
+          createdAt: user.created_at,
+          updatedAt: user.updated_at || user.created_at,
+          password: "",
+        };
+      } catch (err) {
+        console.error("[Database] Erro de conexão Supabase, usando mock:", err instanceof Error ? err.message : err);
+        // Fallback para mock
+        const user = Array.from(mockUsers.values()).find(u => u.email === email);
+        return user || null;
       }
-
-      const user = data.users.find(u => u.email === email);
-      if (!user) return null;
-
-      const { data: profile } = await supabaseAdmin
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-
-      return {
-        id: user.id,
-        email: user.email!,
-        name: profile?.name || user.user_metadata?.name || user.email!,
-        role: profile?.role || user.app_metadata?.role || "viewer",
-        avatar: profile?.avatar_url,
-        createdAt: user.created_at,
-        updatedAt: user.updated_at || user.created_at,
-        password: "",
-      };
     }
 
     const user = Array.from(mockUsers.values()).find(u => u.email === email);
