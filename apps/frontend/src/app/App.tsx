@@ -1,9 +1,11 @@
 import { useEffect } from "react";
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
 import { LoginPage } from "./pages/LoginPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { AppsPage } from "./pages/AppsPage";
+import { AppFormPage } from "./pages/AppFormPage";
+import { AppDetailPage } from "./pages/AppDetailPage";
 import { Layout } from "./components/Layout";
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -37,6 +39,9 @@ export function App() {
                   <Route path="/" element={<Navigate to="/dashboard" replace />} />
                   <Route path="/dashboard" element={<DashboardPage />} />
                   <Route path="/apps" element={<AppsPage />} />
+                  <Route path="/apps/new" element={<AppFormPage />} />
+                  <Route path="/apps/:id" element={<AppDetailPage />} />
+                  <Route path="/apps/:id/edit" element={<AppFormPage />} />
                   <Route path="*" element={<Navigate to="/dashboard" replace />} />
                 </Routes>
               </Layout>

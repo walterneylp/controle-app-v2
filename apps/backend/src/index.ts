@@ -8,6 +8,8 @@ import { healthRouter } from "./modules/health/routes.js";
 import { authRouter } from "./modules/auth/routes.js";
 import { appsRouter } from "./modules/apps/routes.js";
 import { hostingsRouter } from "./modules/hostings/routes.js";
+import { domainsRouter } from "./modules/domains/routes.js";
+import { secretsRouter } from "./modules/secrets/routes.js";
 
 const app = express();
 
@@ -21,6 +23,8 @@ app.use("/api/health", healthRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/apps", appsRouter);
 app.use("/api/hostings", hostingsRouter);
+app.use("/api/domains", domainsRouter);
+app.use("/api/secrets", secretsRouter);
 
 // Error handler
 app.use(errorHandler);

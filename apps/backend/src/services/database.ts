@@ -403,6 +403,26 @@ export class DatabaseService {
     return { ...newSecret, encryptedValue: undefined, iv: undefined, authTag: undefined };
   }
 
+  async updateSecret(id: string, updates: any): Promise<any> {
+    if (this.useSupabase && supabaseAdmin) {
+      const { data, error } = await supabaseAdmin
+        .from("secrets")
+        .update(updates)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    }
+
+    const existing = mockSecrets.get(id);
+    if (!existing) throw new Error("Secret not found");
+    const updated = { ...existing, ...updates, updatedAt: new Date().toISOString() };
+    mockSecrets.set(id, updated);
+    return { ...updated, encryptedValue: undefined, iv: undefined, authTag: undefined };
+  }
+
   async deleteSecret(id: string): Promise<void> {
     if (this.useSupabase && supabaseAdmin) {
       const { error } = await supabaseAdmin
