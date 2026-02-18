@@ -2,7 +2,18 @@
 
 ## 1. Configurar Banco de Dados (Supabase)
 
-### Passo 1: Criar Usuarios no Auth
+### Passo 1: Criar Usuarios (2 opcoes)
+
+#### Opcao A: Via SQL (MAIS FACIL - Recomendado)
+
+Execute o script `12_create_users.sql` no SQL Editor:
+```sql
+-- Isso cria automaticamente os 3 usuarios com roles corretas
+-- Login: admin@controle.app / admin123
+```
+
+#### Opcao B: Via Dashboard (Manual)
+
 1. Acesse: https://crm.apogeuautomacao.ia.br/project/default
 2. Va em **Authentication** → **Users** → **Add User**
 3. Crie 3 usuarios:
@@ -12,6 +23,8 @@
 | admin@controle.app | admin123 | `{"role": "admin"}` |
 | editor@controle.app | editor123 | `{"role": "editor"}` |
 | viewer@controle.app | viewer123 | `{"role": "viewer"}` |
+
+**Nota**: Veja o guia detalhado em `infra/supabase/GUIA_USUARIOS.md`
 
 ### Passo 2: Executar Scripts SQL
 1. Va em **SQL Editor** → **New Query**
@@ -76,6 +89,7 @@ infra/supabase/sql_scripts/
 ├── 09_audit_logs.sql      -> Auditoria
 ├── 10_alerts.sql          -> Alertas
 ├── 11_storage.sql         -> Storage
+├── 12_create_users.sql    -> Cria usuarios com roles (NOVO!)
 ├── 99_seed.sql            -> Dados iniciais
 └── README.md              -> Documentacao
 ```

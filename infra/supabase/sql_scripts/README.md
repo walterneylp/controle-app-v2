@@ -24,13 +24,22 @@ Execute os arquivos **na ordem numerica** no SQL Editor do Supabase:
 09_audit_logs.sql     -> Tabela de auditoria
 10_alerts.sql         -> Tabela de alertas
 11_storage.sql        -> Configuracao do storage
+12_create_users.sql   -> Cria usuarios com roles (OPCAO MAIS FACIL!)
 99_seed.sql           -> Dados iniciais (OPCIONAL)
 ```
 
 ## Passo a Passo
 
-### 1. Criar Usuarios no Auth (ANTES do seed)
+### 1. Executar SQL Scripts (00 a 11)
 
+Execute os arquivos na ordem numerica no SQL Editor.
+
+### 2. Criar Usuarios (2 opcoes)
+
+#### Opcao A: Via SQL (Mais facil!)
+Execute o arquivo `12_create_users.sql` - isso cria os 3 usuarios automaticamente.
+
+#### Opcao B: Via Dashboard
 Va em: Authentication -> Users -> Add User
 
 Crie 3 usuarios:
@@ -40,11 +49,13 @@ Crie 3 usuarios:
 | editor@controle.app | editor123 | `{"role": "editor"}` |
 | viewer@controle.app | viewer123 | `{"role": "viewer"}` |
 
-### 2. Executar SQL Scripts
+Veja o guia detalhado em `GUIA_USUARIOS.md`.
 
-Execute os arquivos 00 a 11 na ordem.
+### 3. Popular com Dados (Opcional)
 
-### 3. Configurar Backend
+Execute o `99_seed.sql` para criar apps, dominios e integracoes de exemplo.
+
+### 4. Configurar Backend
 
 Copie o arquivo de exemplo:
 ```bash
