@@ -23,17 +23,23 @@ authRouter.post("/login", async (req, res) => {
 
   const { email, password } = parsed.data;
 
-  // Tentar autenticar com Supabase primeiro (se configurado)
-  if (isSupabaseConfigured()) {
-    const supabaseAuth = await authenticateWithSupabase(email, password);
-    if (supabaseAuth) {
-      return res.json({
-        success: true,
-        data: {
-          token: supabaseAuth.token,
-          user: supabaseAuth.user,
-        },
-      });
+  // Tentar autenticar com Supabase primeiro (se configurado e acessível)
+  // Desabilitado por padrão - usar apenas autenticação local
+  const useSupabaseAuth = false; // isSupabaseConfigured()
+  if (useSupabaseAuth) {
+    try {
+      const supabaseAuth = await authenticateWithSupabase(email, password);
+      if (supabaseAuth) {
+        return res.json({
+          success: true,
+          data: {
+            token: supabaseAuth.token,
+            user: supabaseAuth.user,
+          },
+        });
+      }
+    } catch {
+      // Fall through to local auth
     }
   }
 

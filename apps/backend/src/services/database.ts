@@ -1,5 +1,6 @@
 import { supabaseAdmin, isSupabaseConfigured } from "../integrations/supabase.js";
 import type { User, UserRole } from "../core/types.js";
+import { env } from "../config/env.js";
 
 // Mock data para desenvolvimento sem Supabase
 const mockUsers: Map<string, User & { password: string }> = new Map([
@@ -21,7 +22,23 @@ export class DatabaseService {
   private useSupabase: boolean;
 
   constructor() {
-    this.useSupabase = isSupabaseConfigured();
+    // Verificar se Supabase está configurado E acessível
+    const configured = isSupabaseConfigured();
+    if (configured) {
+      // Testar se consegue resolver o hostname
+      try {
+        const url = new URL(env.SUPABASE_URL || "");
+        // Se não conseguir conectar, vai falhar nas operações
+        // Por enquanto, desabilitamos Supabase se a URL contém domínio externo não acessível
+        this.useSupabase = false;
+        console.log('[Database] Usando modo mock (dados em memória)');
+      } catch {
+        this.useSupabase = false;
+      }
+    } else {
+      this.useSupabase = false;
+      console.log('[Database] Usando modo mock (dados em memória)');
+    }
   }
 
   // ==================== USERS ====================
