@@ -13,6 +13,8 @@
     "build": "npm run build -w apps/backend && npm run build -w apps/frontend",
     "lint": "npm run lint -w apps/backend && npm run lint -w apps/frontend",
     "deploy": "npm run build && node scripts/deploy.mjs",
+    "deploy:auto": "node scripts/auto-deploy.mjs",
+    "ship": "node scripts/auto-deploy.mjs",
     "db:setup": "node scripts/setup-db.mjs",
     "db:migrate": "node infra/supabase/migrate.mjs up",
     "db:seed": "node infra/supabase/migrate.mjs seed",
