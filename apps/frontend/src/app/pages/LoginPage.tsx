@@ -5,6 +5,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { useAuthStore } from "@/stores/auth";
 import { cn } from "@/lib/utils";
 import { BUILD_NUMBER, VERSION_LABEL } from "@/generated/buildInfo";
+import { login as loginApi } from "@/lib/api";
 
 export function LoginPage() {
   const [email, setEmail] = useState("admin@controle.app");
@@ -23,32 +24,13 @@ export function LoginPage() {
     setIsLoading(true);
 
     try {
-      // Mock authentication
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const response = await loginApi(email, password);
+      const { token, user } = response.data;
       
-      if (email === "admin@controle.app" && password === "admin123") {
-        setAuth(
-          { id: "1", email, name: "Administrador", role: "admin" },
-          "mock-token-123"
-        );
-        navigate("/dashboard");
-      } else if (email === "editor@controle.app" && password === "editor123") {
-        setAuth(
-          { id: "2", email, name: "Editor", role: "editor" },
-          "mock-token-456"
-        );
-        navigate("/dashboard");
-      } else if (email === "viewer@controle.app" && password === "viewer123") {
-        setAuth(
-          { id: "3", email, name: "Visualizador", role: "viewer" },
-          "mock-token-789"
-        );
-        navigate("/dashboard");
-      } else {
-        setError("Email ou senha incorretos");
-      }
-    } catch {
-      setError("Erro ao fazer login");
+      setAuth(user, token);
+      navigate("/dashboard");
+    } catch (err: any) {
+      setError(err.message || "Erro ao fazer login");
     } finally {
       setIsLoading(false);
     }

@@ -6,6 +6,11 @@ async function getToken(): Promise<string | null> {
   return useAuthStore.getState().token;
 }
 
+function logout() {
+  useAuthStore.getState().logout();
+  window.location.href = "/login";
+}
+
 async function fetchApi<T>(
   endpoint: string,
   options: RequestInit = {}
@@ -21,18 +26,32 @@ async function fetchApi<T>(
     headers["Authorization"] = `Bearer ${token}`;
   }
   
-  const response = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers,
-  });
-  
-  const data = await response.json();
-  
-  if (!response.ok) {
-    throw new Error(data.error?.message || "Erro na requisicao");
+  try {
+    const response = await fetch(`${API_BASE}${endpoint}`, {
+      ...options,
+      headers,
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      // Se for erro de autenticacao, faz logout automatico
+      if (response.status === 401) {
+        console.error("Token invalido ou expirado. Redirecionando para login...");
+        logout();
+        throw new Error("Sessao expirada. Faca login novamente.");
+      }
+      throw new Error(data.error?.message || "Erro na requisicao");
+    }
+    
+    return data as T;
+  } catch (error: any) {
+    if (error.message?.includes("Sessao expirada")) {
+      throw error;
+    }
+    // Erro de rede
+    throw new Error("Erro de conexao com o servidor. Verifique se o backend esta rodando.");
   }
-  
-  return data as T;
 }
 
 // Auth

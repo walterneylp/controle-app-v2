@@ -43,13 +43,19 @@ export async function requireAuth(
   next: NextFunction
 ): Promise<void> {
   const authHeader = req.headers.authorization;
+  
+  console.log("[Auth] Header recebido:", authHeader ? authHeader.substring(0, 20) + "..." : "null");
 
   if (!authHeader?.startsWith("Bearer ")) {
+    console.log("[Auth] Header nao comeca com Bearer");
     throw new UnauthorizedError();
   }
 
   const token = authHeader.slice(7);
+  console.log("[Auth] Token extraido, tamanho:", token.length);
+  
   const payload = verifyToken(token);
+  console.log("[Auth] Payload verificado:", payload ? "valido" : "invalido");
 
   if (!payload) {
     throw new UnauthorizedError("Token inválido ou expirado");
