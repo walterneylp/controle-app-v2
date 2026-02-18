@@ -22,6 +22,14 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(32, "JWT_SECRET deve ter pelo menos 32 caracteres"),
   JWT_EXPIRES_IN: z.string().default("8h"),
   CORS_ORIGIN: z.string().default("http://localhost:5173"),
+  
+  // Supabase
+  SUPABASE_URL: z.string().optional(),
+  SUPABASE_ANON_KEY: z.string().optional(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
+  
+  // Encryption
+  ENCRYPTION_KEY: z.string().min(32, "ENCRYPTION_KEY deve ter pelo menos 32 caracteres").default("default-dev-key-change-in-production-32"),
 });
 
 const parsed = envSchema.safeParse(process.env);

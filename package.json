@@ -12,7 +12,11 @@
     "dev:frontend": "npm run dev -w apps/frontend",
     "build": "npm run build -w apps/backend && npm run build -w apps/frontend",
     "lint": "npm run lint -w apps/backend && npm run lint -w apps/frontend",
-    "deploy": "npm run build && node scripts/deploy.mjs"
+    "deploy": "npm run build && node scripts/deploy.mjs",
+    "db:setup": "node scripts/setup-db.mjs",
+    "db:migrate": "node infra/supabase/migrate.mjs up",
+    "db:seed": "node infra/supabase/migrate.mjs seed",
+    "db:status": "node infra/supabase/migrate.mjs status"
   },
   "devDependencies": {
     "@types/node": "^22.8.7"
