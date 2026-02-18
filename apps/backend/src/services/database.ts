@@ -2,6 +2,18 @@ import { supabaseAdmin, isSupabaseConfigured } from "../integrations/supabase.js
 import type { User, UserRole } from "../core/types.js";
 import { env } from "../config/env.js";
 
+// Helper para converter camelCase para snake_case
+function toSnakeCase(obj: any): any {
+  if (obj === null || typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) return obj.map(toSnakeCase);
+  
+  return Object.keys(obj).reduce((acc, key) => {
+    const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+    acc[snakeKey] = toSnakeCase(obj[key]);
+    return acc;
+  }, {} as any);
+}
+
 // Mock data para desenvolvimento sem Supabase
 const mockUsers: Map<string, User & { password: string }> = new Map([
   ["1", { id: "1", email: "admin@controle.app", name: "Administrador", role: "admin" as UserRole, password: "admin123", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }],
@@ -176,7 +188,7 @@ export class DatabaseService {
     if (this.useSupabase && supabaseAdmin) {
       const { data, error } = await supabaseAdmin
         .from("apps")
-        .insert(app)
+        .insert(toSnakeCase(app))
         .select()
         .single();
 
@@ -191,7 +203,7 @@ export class DatabaseService {
     if (this.useSupabase && supabaseAdmin) {
       const { data, error } = await supabaseAdmin
         .from("apps")
-        .update(updates)
+        .update(toSnakeCase(updates))
         .eq("id", id)
         .select()
         .single();
@@ -257,7 +269,7 @@ export class DatabaseService {
     if (this.useSupabase && supabaseAdmin) {
       const { data, error } = await supabaseAdmin
         .from("hostings")
-        .insert(hosting)
+        .insert(toSnakeCase(hosting))
         .select()
         .single();
 
@@ -274,7 +286,7 @@ export class DatabaseService {
     if (this.useSupabase && supabaseAdmin) {
       const { data, error } = await supabaseAdmin
         .from("hostings")
-        .update(updates)
+        .update(toSnakeCase(updates))
         .eq("id", id)
         .select()
         .single();
@@ -336,7 +348,7 @@ export class DatabaseService {
     if (this.useSupabase && supabaseAdmin) {
       const { data, error } = await supabaseAdmin
         .from("domains")
-        .insert(domain)
+        .insert(toSnakeCase(domain))
         .select()
         .single();
 
@@ -353,7 +365,7 @@ export class DatabaseService {
     if (this.useSupabase && supabaseAdmin) {
       const { data, error } = await supabaseAdmin
         .from("domains")
-        .update(updates)
+        .update(toSnakeCase(updates))
         .eq("id", id)
         .select()
         .single();
@@ -415,7 +427,7 @@ export class DatabaseService {
     if (this.useSupabase && supabaseAdmin) {
       const { data, error } = await supabaseAdmin
         .from("secrets")
-        .insert(secret)
+        .insert(toSnakeCase(secret))
         .select()
         .single();
 
@@ -432,7 +444,7 @@ export class DatabaseService {
     if (this.useSupabase && supabaseAdmin) {
       const { data, error } = await supabaseAdmin
         .from("secrets")
-        .update(updates)
+        .update(toSnakeCase(updates))
         .eq("id", id)
         .select()
         .single();
